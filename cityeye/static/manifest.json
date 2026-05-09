@@ -1,0 +1,15 @@
+{
+  "name": "CityEye — Intelligence Urbaine",
+  "short_name": "CityEye",
+  "description": "Plateforme de surveillance intelligente de la ville de Rabat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1B2E",
+  "theme_color": "#4DD9E8",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/static/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["utilities", "navigation"],
+  "lang": "fr"
+}
