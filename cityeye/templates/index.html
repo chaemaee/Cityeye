@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CityEye — Intelligence Urbaine en Temps Réel</title>
+
+  <!-- Leaflet — vraie carte interactive -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+
+<!-- ═══════ FOND ANIMÉ ═══════ -->
+<div class="bg-grid"></div>
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+<div class="bg-glow glow-3"></div>
+
+<!-- ═══════ EN-TÊTE ═══════ -->
+<header class="header">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="CityEye Logo" class="logo-img"
+         onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex'"/>
+    <div class="logo-fallback" id="logo-fallback">
+      <i class="ti ti-eye"></i>
+    </div>
+    <div class="logo-text-group">
+      <span class="logo-name">CITY<span class="logo-accent">EYE</span></span>
+      <span class="logo-sub">Intelligence Urbaine en Temps Réel</span>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="live-pill">
+      <span class="pulse-ring"></span>
+      <span class="pulse-dot"></span>
+      SYSTÈME ACTIF — RABAT
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="stat-pill">
+      <i class="ti ti-thermometer"></i>
+      <span id="h-temp">—°C</span>
+    </div>
+    <div class="stat-pill">
+      <i class="ti ti-droplet"></i>
+      <span id="h-hum">—%</span>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- ═══════ TICKER ═══════ -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-sep">◈</span>
+    <span>🟢 Agdal : Zone sécurisée</span>
+    <span class="ticker-sep">◈</span>
+    <span>🔴 Hassan II : Trafic critique — accident</span>
+    <span class="ticker-sep">◈</span>
+    <span>🌧️ Hay Riad : Risque inondation (faible)</span>
+    <span class="ticker-sep">◈</span>
+    <span>🚑 Akkari : Urgence traitée avec succès</span>
+    <span class="ticker-sep">◈</span>
+    <span>🌫️ Qualité air : Bonne — IQA 42</span>
+    <span class="ticker-sep">◈</span>
+    <span>⚡ Énergie : Consommation normale</span>
+    <span class="ticker-sep">◈</span>
+    <span>🟢 Agdal : Zone sécurisée</span>
+    <span class="ticker-sep">◈</span>
+    <span>🔴 Hassan II : Trafic critique — accident</span>
+    <span class="ticker-sep">◈</span>
+    <span>🌧️ Hay Riad : Risque inondation (faible)</span>
+    <span class="ticker-sep">◈</span>
+    <span>🚑 Akkari : Urgence traitée avec succès</span>
+    <span class="ticker-sep">◈</span>
+    <span>🌫️ Qualité air : Bonne — IQA 42</span>
+    <span class="ticker-sep">◈</span>
+    <span>⚡ Énergie : Consommation normale</span>
+    <span class="ticker-sep">◈</span>
+  </div>
+</div>
+
+<!-- ═══════ NAVIGATION ═══════ -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showTab('dashboard',this)">
+    <i class="ti ti-layout-dashboard"></i><span>Dashboard</span>
+  </button>
+  <button class="nav-btn" onclick="showTab('trafic',this)">
+    <i class="ti ti-car"></i><span>Trafic</span>
+  </button>
+  <button class="nav-btn" onclick="showTab('alertes',this)">
+    <i class="ti ti-bell"></i><span>Alertes</span>
+    <span class="nav-badge" id="nav-badge-alertes">5</span>
+  </button>
+  <button class="nav-btn" onclick="showTab('securite',this)">
+    <i class="ti ti-shield"></i><span>Sécurité</span>
+  </button>
+  <button class="nav-btn" onclick="showTab('pollution',this)">
+    <i class="ti ti-leaf"></i><span>Pollution</span>
+  </button>
+</nav>
+
+<!-- ═══════ CONTENU ═══════ -->
+<main class="main">
+
+  <!-- ─── DASHBOARD ─── -->
+  <div id="tab-dashboard" class="tab">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon"><i class="ti ti-shield-check"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Score Sécurité</div>
+          <div class="kpi-val" id="kpi-score">—</div>
+          <div class="kpi-note" id="kpi-score-note">calcul...</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon"><i class="ti ti-car"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Trafic Urbain</div>
+          <div class="kpi-val" id="kpi-trafic">—</div>
+          <div class="kpi-note" id="kpi-trafic-note">saturation</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon"><i class="ti ti-bell-ringing"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Alertes Actives</div>
+          <div class="kpi-val" id="kpi-alertes">—</div>
+          <div class="kpi-note">incidents en cours</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><i class="ti ti-wind"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Qualité de l'Air</div>
+          <div class="kpi-val" id="kpi-iqa">—</div>
+          <div class="kpi-note" id="kpi-iqa-note">IQA</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+    </div>
+
+    <!-- Carte + Alertes -->
+    <div class="dash-grid">
+      <div class="glass-card map-card">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-map-2"></i> Carte de Rabat — Temps Réel</span>
+          <span class="card-badge live">LIVE</span>
+        </div>
+        <div id="map" class="map-box"></div>
+        <div class="map-legend">
+          <span><span class="ldot safe"></span>Sûre</span>
+          <span><span class="ldot warning"></span>Attention</span>
+          <span><span class="ldot danger"></span>Danger</span>
+          <span><span class="ldot traffic"></span>Trafic</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-bell"></i> Alertes Récentes</span>
+          <button class="see-all-btn" onclick="showTab('alertes', document.querySelectorAll('.nav-btn')[2])">Voir tout</button>
+        </div>
+        <div id="alertes-dash" class="alerts-list"></div>
+      </div>
+    </div>
+
+    <!-- Graphique -->
+    <div class="glass-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ti ti-chart-line"></i> Score de Sécurité — 7 Derniers Jours</span>
+        <span class="last-update" id="last-update">—</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="safetyChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── TRAFIC ─── -->
+  <div id="tab-trafic" class="tab hidden">
+    <div class="glass-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ti ti-map-2"></i> Carte Trafic — Rabat</span>
+        <span class="card-badge live">LIVE</span>
+      </div>
+      <div id="map-trafic" class="map-box"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-car"></i> État des Axes Principaux</div>
+      <div id="traffic-list" class="traffic-list"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-chart-bar"></i> Saturation par Axe</div>
+      <div id="traffic-bars" class="bars-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── ALERTES ─── -->
+  <div id="tab-alertes" class="tab hidden">
+    <div class="glass-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ti ti-bell-ringing"></i> Toutes les Alertes Actives</span>
+        <span class="card-badge live">LIVE</span>
+      </div>
+      <div id="alertes-all" class="alerts-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── SÉCURITÉ ─── -->
+  <div id="tab-securite" class="tab hidden">
+    <div class="sec-grid">
+      <div class="glass-card">
+        <div class="card-title" style="margin-bottom:16px;"><i class="ti ti-sos"></i> Bouton SOS Citoyen</div>
+        <div class="sos-grid">
+          <button class="sos-btn sos-red"   onclick="envoyerSOS('Urgence médicale')">
+            <i class="ti ti-ambulance"></i><span>Médical</span>
+          </button>
+          <button class="sos-btn sos-amber" onclick="envoyerSOS('Incident signalé')">
+            <i class="ti ti-alert-triangle"></i><span>Incident</span>
+          </button>
+          <button class="sos-btn sos-blue"  onclick="envoyerSOS('Appel police')">
+            <i class="ti ti-shield"></i><span>Police</span>
+          </button>
+          <button class="sos-btn sos-teal"  onclick="envoyerSOS('Incendie signalé')">
+            <i class="ti ti-flame"></i><span>Incendie</span>
+          </button>
+        </div>
+        <div id="sos-confirm" class="sos-confirm hidden"></div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-map-pin"></i> Scores de Sécurité par Zone</div>
+        <div id="zones-list" class="zones-list"></div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-camera"></i> Surveillance IA — Caméras</div>
+      <div id="cameras-list" class="cameras-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── POLLUTION ─── -->
+  <div id="tab-pollution" class="tab hidden">
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon"><i class="ti ti-wind"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">IQA Global</div>
+          <div class="kpi-val" id="poll-iqa">—</div>
+          <div class="kpi-note" id="poll-iqa-note">—</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon"><i class="ti ti-smoke"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">PM2.5</div>
+          <div class="kpi-val" id="poll-pm25">—</div>
+          <div class="kpi-note">µg/m³</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><i class="ti ti-bolt"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Énergie Ville</div>
+          <div class="kpi-val" id="poll-energie">—</div>
+          <div class="kpi-note">utilisation</div>
+        </div>
+        <div class="kpi-ring"></div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-chart-area"></i> Qualité de l'Air — 24h</div>
+      <div class="chart-wrap">
+        <canvas id="airChart"></canvas>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-title" style="margin-bottom:14px;"><i class="ti ti-bulb"></i> Recommandations IA</div>
+      <div class="reco-list">
+        <div class="reco-item reco-green">
+          <div class="reco-icon"><i class="ti ti-bulb"></i></div>
+          <div><div class="reco-titre">Éteindre les lampadaires inutilisés</div><div class="reco-sub">Zone Hay Riad — économie estimée 12%</div></div>
+        </div>
+        <div class="reco-item reco-green">
+          <div class="reco-icon"><i class="ti ti-car-off"></i></div>
+          <div><div class="reco-titre">Limiter la circulation lourde 7h–9h</div><div class="reco-sub">Avenue Hassan II — réduction PM2.5 de 18%</div></div>
+        </div>
+        <div class="reco-item reco-amber">
+          <div class="reco-icon"><i class="ti ti-alert-circle"></i></div>
+          <div><div class="reco-titre">Surveillance renforcée zone industrielle</div><div class="reco-sub">Pic NO₂ prévu demain matin — action préventive</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
