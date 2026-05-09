@@ -465,10 +465,6 @@ def historique_securite():
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-
-    print("=" * 52)
-    print("  🌆 CityEye — Serveur démarré")
-    print("  👉 http://127.0.0.1:5000")
-    print("=" * 52)
-
-    app.run(debug=True)
+    # Pour le développement local
+    app.run(host='0.0.0.0', port=5000)
+    
